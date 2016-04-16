@@ -13,7 +13,7 @@ var util = require('./util')
 function getParameterByName(name, url) {
     if (!url) url = window.location.href;
     name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[#&]" + name + "(=([^&#]*)|&|#|$)", "i"),
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)", "i"),
         results = regex.exec(url);
     if (!results) return null;
     if (!results[2]) return '';
@@ -21,6 +21,8 @@ function getParameterByName(name, url) {
 }
 
 srcURI = getParameterByName('src');
+
+console.log(window.location.href);
 
 srcURI = srcURI || 'https://fastcast.nz/torrents/'+ torrentName;
 
