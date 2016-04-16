@@ -84,7 +84,7 @@ function initView() {
         'settings': false
       },
       widgets: {
-        'dashboard': false,
+        'dashboard': true,
         'summary': false,
         'media' : true,
         'work': false,
