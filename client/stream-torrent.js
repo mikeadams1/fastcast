@@ -7,7 +7,9 @@ var WebTorrent = require('webtorrent')
 
 var util = require('./util')
 
-http.get('https://fastcast.nz/torrents/' + torrentName, function (res) {
+
+
+http.get(srcURI, function (res) {
   var data = [] // List of Buffer objects
 
   res.on('data', function (chunk) {

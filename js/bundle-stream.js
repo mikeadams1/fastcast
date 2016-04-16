@@ -9,7 +9,22 @@ var WebTorrent = require('webtorrent')
 
 var util = require('./util')
 
-http.get('https://fastcast.nz/torrents/' + torrentName, function (res) {
+// HELPER FUNCTIONS
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)", "i"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+srcURI = getParameterByName('src');
+
+srcURI = srcURI || 'https://fastcast.nz/torrents/'+ torrentName;
+
+http.get(srcURI, function (res) {
   var data = [] // List of Buffer objects
 
   res.on('data', function (chunk) {
@@ -388,36 +403,7 @@ function magnetURIEncode (obj) {
 
 }).call(this,require("buffer").Buffer)
 },{"buffer":168,"thirty-two":6,"uniq":8,"xtend":9}],6:[function(require,module,exports){
-/*                                                                              
-Copyright (c) 2011, Chris Umbel
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in      
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
-THE SOFTWARE.
-*/
-
-var base32 = require('./thirty-two');
-
-exports.encode = base32.encode;
-exports.decode = base32.decode;
-
-},{"./thirty-two":7}],7:[function(require,module,exports){
-(function (Buffer){
-/*                                                                              
+/*
 Copyright (c) 2011, Chris Umbel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -436,7 +422,36 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.                                                                   
+THE SOFTWARE.
+*/
+
+var base32 = require('./thirty-two');
+
+exports.encode = base32.encode;
+exports.decode = base32.decode;
+
+},{"./thirty-two":7}],7:[function(require,module,exports){
+(function (Buffer){
+/*
+Copyright (c) 2011, Chris Umbel
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 */
 
 var charTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -472,7 +487,7 @@ exports.encode = function(plain) {
         faster. will have to revisit. */
     while(i < plain.length) {
         var current = plain[i];
-    
+
         if(shiftIndex > 3) {
             digit = current & (0xff >> shiftIndex);
             shiftIndex = (shiftIndex + 5) % 8;
@@ -481,17 +496,17 @@ exports.encode = function(plain) {
             i++;
         } else {
             digit = (current >> (8 - (shiftIndex + 5))) & 0x1f;
-            shiftIndex = (shiftIndex + 5) % 8;            
+            shiftIndex = (shiftIndex + 5) % 8;
             if(shiftIndex == 0) i++;
         }
-        
+
         encoded[j] = charTable.charCodeAt(digit);
         j++;
     }
 
     for(i = j; i < encoded.length; i++)
         encoded[i] = 0x3d; //'='.charCodeAt(0)
-        
+
     return encoded;
 };
 
@@ -504,22 +519,22 @@ exports.decode = function(encoded) {
     	encoded = new Buffer(encoded);
     }
     var decoded = new Buffer(Math.ceil(encoded.length * 5 / 8));
-    
+
     /* byte by byte isn't as pretty as octet by octet but tests a bit
-        faster. will have to revisit. */    
+        faster. will have to revisit. */
     for(var i = 0; i < encoded.length; i++) {
     	if(encoded[i] == 0x3d){ //'='
     		break;
     	}
-    		
+
         var encodedByte = encoded[i] - 0x30;
-        
+
         if(encodedByte < byteTable.length) {
             plainDigit = byteTable[encodedByte];
-            
+
             if(shiftIndex <= 3) {
                 shiftIndex = (shiftIndex + 5) % 8;
-                
+
                 if(shiftIndex == 0) {
                     plainChar |= plainDigit;
                     decoded[plainPos] = plainChar;
@@ -2740,27 +2755,27 @@ var hat = module.exports = function (bits, base) {
     if (!base) base = 16;
     if (bits === undefined) bits = 128;
     if (bits <= 0) return '0';
-    
+
     var digits = Math.log(Math.pow(2, bits)) / Math.log(base);
     for (var i = 2; digits === Infinity; i *= 2) {
         digits = Math.log(Math.pow(2, bits / i)) / Math.log(base) * i;
     }
-    
+
     var rem = digits - Math.floor(digits);
-    
+
     var res = '';
-    
+
     for (var i = 0; i < Math.floor(digits); i++) {
         var x = Math.floor(Math.random() * base).toString(base);
         res = x + res;
     }
-    
+
     if (rem) {
         var b = Math.pow(base, rem);
         var x = Math.floor(Math.random() * b).toString(base);
         res = x + res;
     }
-    
+
     var parsed = parseInt(res, base);
     if (parsed !== Infinity && parsed >= Math.pow(2, bits)) {
         return hat(bits, base)
@@ -2776,24 +2791,24 @@ hat.rack = function (bits, base, expandBy) {
                 if (expandBy) bits += expandBy;
                 else throw new Error('too many ID collisions, use more bits')
             }
-            
+
             var id = hat(bits, base);
         } while (Object.hasOwnProperty.call(hats, id));
-        
+
         hats[id] = data;
         return id;
     };
     var hats = fn.hats = {};
-    
+
     fn.get = function (id) {
         return fn.hats[id];
     };
-    
+
     fn.set = function (id, value) {
         fn.hats[id] = value;
         return fn;
     };
-    
+
     fn.bits = bits || 128;
     fn.base = base || 16;
     return fn;
@@ -5494,7 +5509,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 				self.push(new Buffer(response))
 				break
 			}
-			// Falls through in IE8	
+			// Falls through in IE8
 		case 'text':
 			try { // This will fail when readyState = 3 in IE9. Switch mode and wait for readyState = 4
 				response = xhr.responseText
@@ -9317,10 +9332,10 @@ function Block (size, opts) {
         size = opts.size;
     }
     this.size = size || 512;
-    
+
     if (opts.nopad) this._zeroPadding = false;
     else this._zeroPadding = defined(opts.zeroPadding, true);
-    
+
     this._buffered = [];
     this._bufferedBytes = 0;
 }
@@ -9328,7 +9343,7 @@ function Block (size, opts) {
 Block.prototype._transform = function (buf, enc, next) {
     this._bufferedBytes += buf.length;
     this._buffered.push(buf);
-    
+
     while (this._bufferedBytes >= this.size) {
         var b = Buffer.concat(this._buffered);
         this._bufferedBytes -= this.size;
@@ -10095,7 +10110,7 @@ for (var i = 14; i <= 22; i++) {
 
 module.exports = function(size) {
   return closest(
-    size / Math.pow(2, 10), sizes 
+    size / Math.pow(2, 10), sizes
   )
 }
 
@@ -10109,7 +10124,7 @@ module.exports = function(target, numbers) {
     return a - b
   })
 
-  for (var i = 0, l = numbers.length; i < l; i++) {  
+  for (var i = 0, l = numbers.length; i < l; i++) {
     difference = Math.abs(target - numbers[i])
     if (difference >= closest) {
       break
@@ -11721,13 +11736,13 @@ module.exports = function(haystack, needle, comparator, low, high) {
     cmp = +comparator(haystack[mid], needle);
 
     /* Too low. */
-    if(cmp < 0.0) 
+    if(cmp < 0.0)
       low  = mid + 1;
 
     /* Too high. */
     else if(cmp > 0.0)
       high = mid - 1;
-    
+
     /* Key found. */
     else
       return mid;
